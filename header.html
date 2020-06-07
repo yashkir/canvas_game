@@ -6,19 +6,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
-    <?php echo $title;?>
+    <?php echo "Yuriy Yashkir's Page - " . $title;?>
   </title> 
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-<header>
+
+<header class="bordered">
   <h1>Yuriy Yashkir's Page</h1>
   <h2><?php echo $title;?></h2>
 </header>
 
 <nav>
-<ul>
+<ul class="bordered">
   <?php if ($title ==  "Home") { echo "<li class=active>"; } else echo "<li>" ?>
     <a href="index.php">Home</a></li>
   <?php if ($title ==  "About Me") { echo "<li class=active>"; } else echo "<li>" ?>
@@ -29,3 +30,6 @@
     <a href="contact.php">Contact</a></li>
 </ul>
 </nav>
+
+<div id="content" class="clearfix bordered">
+<!-- start content div -->

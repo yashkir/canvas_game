@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
-    <?php echo "Yuriy Yashkir's Page - " . $title;?>
+    <?php echo "Yuriy Yashkir - " . $title;?>
   </title> 
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,7 +14,7 @@
 <body>
 
 <header class="bordered">
-  <h1>Yuriy Yashkir's Page</h1>
+  <h1>Yuriy Yashkir</h1>
   <h2><?php echo $title;?></h2>
 </header>
 
@@ -22,8 +22,8 @@
 <ul class="bordered">
   <?php if ($title ==  "Home") { echo "<li class=active>"; } else echo "<li>" ?>
     <a href="index.php">Home</a></li>
-  <?php if ($title ==  "About Me") { echo "<li class=active>"; } else echo "<li>" ?>
-    <a href="about.php">About Me</a></li>
+  <?php if ($title ==  "About") { echo "<li class=active>"; } else echo "<li>" ?>
+    <a href="about.php">About</a></li>
   <?php if ($title ==  "Links") { echo "<li class=active>"; } else echo "<li>" ?>
     <a href="links.php">Links</a></li>
   <?php if ($title ==  "Contact") { echo "<li class=active>"; } else echo "<li>" ?>

@@ -19,9 +19,13 @@
 
 <nav>
 <ul>
-  <li><a href="index.php">Home</a></li>
-  <li><a href="about.php">About Me</a></li>
-  <li><a href="links.php">Links</a></li>
-  <li><a href="contact.php">Contact</a></li>
+  <?php if ($title ==  "Home") { echo "<li class=active>"; } else echo "<li>" ?>
+    <a href="index.php">Home</a></li>
+  <?php if ($title ==  "About Me") { echo "<li class=active>"; } else echo "<li>" ?>
+    <a href="about.php">About Me</a></li>
+  <?php if ($title ==  "Links") { echo "<li class=active>"; } else echo "<li>" ?>
+    <a href="links.php">Links</a></li>
+  <?php if ($title ==  "Contact") { echo "<li class=active>"; } else echo "<li>" ?>
+    <a href="contact.php">Contact</a></li>
 </ul>
 </nav>

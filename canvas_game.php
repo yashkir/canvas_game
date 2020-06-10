@@ -1,4 +1,4 @@
-<?php 
+<?php
   $path_to_root = './';
   $title = "Canvas Game";
   include 'header.html';

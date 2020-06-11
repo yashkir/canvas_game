@@ -1,6 +1,7 @@
 var BOX;
 var OBSTACLES = [];
 var OBSTACLE;
+var TEXT;
 var INTERVAL;
 var CANVAS = document.createElement("canvas");
 CANVAS.width = 300;
@@ -25,8 +26,9 @@ function spawnObstacle() {
                            "red", x, gapStart + gapSize, -1, 0));
 }
 
-function makePiece(width, height, color, x, y, speedX, speedY) {
+function makePiece(width, height, color, x, y, speedX, speedY, type) {
   var piece = {};
+  piece.type = type;
   piece.width = width;
   piece.height = height;
   piece.color = color;
@@ -42,12 +44,19 @@ function makePiece(width, height, color, x, y, speedX, speedY) {
 }
 
 function updatePiece(piece) {
-  piece.y += piece.speedY;
-  piece.y2 += piece.speedY;
-  piece.x += piece.speedX;
-  piece.x2 += piece.speedX;
-  piece.context.fillStyle = piece.color;
-  piece.context.fillRect(piece.x,piece.y,piece.width,piece.height);
+  context = piece.context;
+  if (piece.type == "text") {
+    context.font = piece.width + " " + piece.height;
+    context.fillStyle = piece.color;
+    context.fillText(piece.text, piece.x, piece.y)
+  } else {
+    piece.y += piece.speedY;
+    piece.y2 += piece.speedY;
+    piece.x += piece.speedX;
+    piece.x2 += piece.speedX;
+    piece.context.fillStyle = piece.color;
+    piece.context.fillRect(piece.x,piece.y,piece.width,piece.height);
+  }
 }
 
 function moveup() {
@@ -90,21 +99,6 @@ function clearCanvas() {
   CONTEXT.clearRect(0, 0, CANVAS.width, CANVAS.height);
 }
 
-function startGame() {
-  BOX = makePiece(10,10,"blue",50,50);
-  OBSTACLES.push(makePiece(10,200,"red",100,100,-1,0));
-  INTERVAL = setInterval(updateGame, 20);
-
-  window.addEventListener("keydown", function (e) {
-    KEYS = (KEYS || []);
-    KEYS[e.keyCode] = true;
-  })
-  window.addEventListener("keyup", function (e) {
-    KEYS = (KEYS || []);
-    KEYS[e.keyCode] = false;
-  })
-}
-
 function updateGame() {
   clearCanvas(CANVAS);
   CONTEXT.fillStyle = "black";
@@ -125,8 +119,25 @@ function updateGame() {
   if (everyinterval(150)) {
     spawnObstacle();
   }
+  TEXT.text = "SCORE: " + FRAMENUM;
+  updatePiece(TEXT);
 }
 
+function startGame() {
+  BOX = makePiece(10,10,"blue",50,50);
+  OBSTACLES.push(makePiece(10,200,"red",100,100,-1,0));
+  TEXT = makePiece("30px", "monospace", "white", 100, 30, 100, 0, "text");
+  INTERVAL = setInterval(updateGame, 20);
+
+  window.addEventListener("keydown", function (e) {
+    KEYS = (KEYS || []);
+    KEYS[e.keyCode] = true;
+  })
+  window.addEventListener("keyup", function (e) {
+    KEYS = (KEYS || []);
+    KEYS[e.keyCode] = false;
+  })
+}
 
 function stopGame() {
   clearInterval(INTERVAL);

@@ -3,13 +3,27 @@ var OBSTACLES = [];
 var OBSTACLE;
 var INTERVAL;
 var CANVAS = document.createElement("canvas");
-CANVAS.width = 640;
-CANVAS.height = 480;
+CANVAS.width = 300;
+CANVAS.height = 200;
 var FRAMENUM = 0;
 var CONTEXT = CANVAS.getContext("2d");
 var KEYS;
 
 document.getElementById("game").insertBefore(CANVAS, document.getElementById("game").childNodes[0]);
+
+function spawnObstacle() {
+  var x = CANVAS.width;
+  var y = 0;
+  var gapSize = 30;
+  var gapMin = 20;
+  var gapMax = CANVAS.height - 20;
+  var gapStart = Math.floor(Math.random() * (gapMax - gapMin)) + gapMin;
+  var width = 10;
+
+  OBSTACLES.push(makePiece(width, gapStart, "red", x, 0, -1, 0));
+  OBSTACLES.push(makePiece(width, CANVAS.height - (gapStart + gapSize),
+                           "red", x, gapStart + gapSize, -1, 0));
+}
 
 function makePiece(width, height, color, x, y, speedX, speedY) {
   var piece = {};
@@ -28,11 +42,6 @@ function makePiece(width, height, color, x, y, speedX, speedY) {
 }
 
 function updatePiece(piece) {
-  stopMove();
-  if (KEYS && KEYS[37]) { moveleft(); }
-  if (KEYS && KEYS[39]) { moveright(); }
-  if (KEYS && KEYS[38]) { moveup(); }
-  if (KEYS && KEYS[40]) { movedown(); }
   piece.y += piece.speedY;
   piece.y2 += piece.speedY;
   piece.x += piece.speedX;
@@ -100,6 +109,11 @@ function updateGame() {
   clearCanvas(CANVAS);
   CONTEXT.fillStyle = "black";
   CONTEXT.fillRect(0, 0, CANVAS.width, CANVAS.height);
+  //stopMove();
+  if (KEYS && KEYS[37]) { moveleft(); }
+  if (KEYS && KEYS[39]) { moveright(); }
+  if (KEYS && KEYS[38]) { moveup(); }
+  if (KEYS && KEYS[40]) { movedown(); }
   updatePiece(BOX);
   for (i = 0; i < OBSTACLES.length; i++) {
     updatePiece(OBSTACLES[i]);
@@ -109,7 +123,7 @@ function updateGame() {
   }
   FRAMENUM++;
   if (everyinterval(150)) {
-    OBSTACLES.push(makePiece(10,200,"red", 200,20,-1,0));
+    spawnObstacle();
   }
 }
 

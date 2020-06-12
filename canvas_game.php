@@ -4,27 +4,34 @@
   include 'header.html';
 ?>
 
-<div id="game">
-</div>
 
-<script src="canvas_game.js">
-</script>
 <style>
 button {
   color:red;
   height:4em;
   text-align:center;
+  padding: auto;
   margin:auto;
 }
+div#game{
+  margin-left:auto;
+  margin-right:auto;
+  width:200px;
+  display:block;
+}
 </style>
-<table id="controls">
-  <tr>
-    <td><button onmousedown="moveleft()" onmouseup="stopMove()" ontouchstart="moveleft()">LEFT</button></td>
-    <td><button onmousedown="moveup()" onmouseup="stopMove()" ontouchstart="moveup()">UP</button></td>
-    <td><button onmousedown="moveright()" onmouseup="stopMove()" ontouchstart="moveright()">RIGHT</button></td>
-  <tr>
-    <td></td>
-    <td><button onmousedown="movedown()" onmouseup="stopMove()" ontouchstart="movedown()">DOWN</button></td>
-</table>
+<div id="game">
+<br>
+<button onmousedown="moveleft()" onmouseup="stopMove()" ontouchstart="moveleft()">LEFT</button>
+<button onmousedown="moveright()" onmouseup="stopMove()" ontouchstart="moveright()">RIGHT</button><br>
+<button onmousedown="moveup()" onmouseup="stopMove()" ontouchstart="moveup()">UP</button>
+<button onmousedown="movedown()" onmouseup="stopMove()" ontouchstart="movedown()">DOWN</button>
+</div>
 
 <?php include 'footer.html';?>
+
+<script src="canvas_game_oo.js">
+</script>
+
+<!--<script src="canvas_game.js">
+</script>-->

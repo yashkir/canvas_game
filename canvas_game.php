@@ -1,7 +1,5 @@
 <?php
-  $path_to_root = './';
   $title = "Canvas Game";
-  include 'header.html';
 ?>
 
 
@@ -27,8 +25,6 @@ div#game{
 <button onmousedown="moveup()" onmouseup="stopMove()" ontouchstart="moveup()">UP</button>
 <button onmousedown="movedown()" onmouseup="stopMove()" ontouchstart="movedown()">DOWN</button>
 </div>
-
-<?php include 'footer.html';?>
 
 <script src="canvas_game_oo.js">
 </script>

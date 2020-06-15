@@ -11,12 +11,6 @@ button {
   padding: auto;
   margin:auto;
 }
-div#game{
-  margin-left:auto;
-  margin-right:auto;
-  width:200px;
-  display:block;
-}
 </style>
 <div id="game">
 <br>

@@ -28,16 +28,6 @@ function Game(elementId, width, height) {
   element.insertBefore(this.canvas, element.childNodes[0]);
 
   this.start = function () {
-    //CONTROLS
-    var w = 20, h = 20
-    var x = this.canvas.width / 2 - w * 3 / 2,
-        y = this.canvas.height - h * 4;
-    this.buttons = {
-      up: new Component(this.context,   x + w,     y,         w, h, "blue"),
-      down: new Component(this.context, x + w,     y + h * 2, w, h, "blue"),
-      left: new Component(this.context, x,         y + h,     w, h, "blue"),
-      right: new Component(this.context,x + w * 2, y + h,     w, h, "blue")
-    };
 
     // Disable the arrow keys from scrolling
     window.addEventListener('keydown', function (e) {
@@ -80,11 +70,23 @@ function Game(elementId, width, height) {
     this.player = new Component(this.context, this.settings.startX, this.settings.startY,
                                 this.settings.playerWidth, this.settings.playerHeight,
                                 this.settings.playerColor, true);
+    this.obstacles = new ObstacleGroup(this.context, 0, 0, 100, 100);
+    this.buttons = new ControlGroup(self.context, this.canvas.width / 2 - 20 * 3 / 2,
+                                                  this.canvas.height - 20 * 4,
+                                                  20, 20);
+
+    this.obstacles.spawn();
     this.interval = window.setInterval(this.update, 1000 / this.settings.fps);
   }
 
   this.stop = function () {
     clearInterval(this.interval);
+  }
+
+  this.clear = function () {
+    this.context.clearRect(0, 0, self.canvas.width, self.canvas.height);
+    this.context.fillStyle = self.settings.backgroundColor;
+    this.context.fillRect(0, 0, self.canvas.width, self.canvas.height);
   }
 
   this.update = function () {
@@ -115,12 +117,11 @@ function Game(elementId, width, height) {
     if (self.input.keys[40]) { self.player.setSpeedY(1); }; //down
 
     // UPDATE AND REDRAW
-    self.context.clearRect(0, 0, self.canvas.width, self.canvas.height);
-    self.context.fillStyle = self.settings.backgroundColor;
-    self.context.fillRect(0, 0, self.canvas.width, self.canvas.height);
 
+    self.clear();
+    self.obstacles.update();
     self.player.update();
-    for (button in self.buttons) { self.buttons[button].update(); };
+    self.buttons.update();
   }
 
   this.onInputEvent = function (e) {
@@ -171,6 +172,61 @@ function Component(context, x, y, width, height, color, isMobile) {
       return false;
     } else {
       return true;
+    }
+  }
+}
+
+function TextBox(context, x, y, width, height, color, isMobile) {
+  Component.call(this, context, x, y, width, height, color, isMobile);
+  //TODO
+}
+
+function ControlGroup(context, x, y, w, h, input) {
+  this.context = context
+  this.input = input;
+
+  this.color = "blue";
+
+  this.up    = new Component(this.context, x + w,     y,         w, h, this.color);
+  this.down  = new Component(this.context, x + w,     y + h * 2, w, h, this.color);
+  this.left  = new Component(this.context, x,         y + h,     w, h, this.color);
+  this.right = new Component(this.context, x + w * 2, y + h,     w, h, this.color);
+  this.buttonGroup = [this.up, this.down, this.left, this.right];
+
+  this.update = function () {
+    for(button of this.buttonGroup) { button.update() };
+  }
+}
+function Obstacle(context, x, y, width, height, color, isMobile) {
+  Component.call(this, context, x, y, width, height, color, isMobile);
+}
+
+function ObstacleGroup(context, x1, y1, x2, y2) {
+  this.context = context;
+  this.obstacles = [];
+  this.x1 = x1;
+  this.x2 = x2;
+  this.y1 = y1;
+  this.y2 = y2;
+
+  this.width = 20; //TODO
+  this.height = 20;
+  
+  this.spawn = function () {
+    var obstacle = new Obstacle(
+      context, this.x1, this.y1, this.width, this.height, "yellow", true);
+    obstacle.setSpeedY(1);
+    this.obstacles.push(obstacle);
+  }
+
+  this.update = function () {
+    var i;
+    for (i = 0; i < this.obstacles.length; i++) {
+      if (this.obstacles[i].y > this.y2) {
+        this.obstacles.splice(i, 1);
+      } else {
+        this.obstacles[i].update();
+      }
     }
   }
 }

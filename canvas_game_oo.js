@@ -175,41 +175,29 @@ class Input {
   constructor(canvas, player, buttons) {
     var self = this;
     this.canvas = canvas;
-
-    this.input = new Object()
-    this.input.keys = [];
-    this.input.x = false;
-    this.input.y = false;
-
     this.player = player;
     this.buttons = buttons;
 
-    // Event listeners, we must use 'self' here. First disable defaults.
-    window.addEventListener('keydown', function (e) {
-      if([37, 38, 39, 40].indexOf(e.keyCode) > -1 ) {
-        e.preventDefault();
-      }
-    });
-    window.addEventListener('keydown', function (e) {
-      self.input.keys[e.keyCode] = true;
-    })
-    window.addEventListener('keyup', function (e) {
-      self.input.keys[e.keyCode] = false;
-    })
+    this.input = {
+      keys : [],
+      x : false,
+      y : false
+    }
 
-    // Mouse and touch TODO scan for mouse leave
+    // TODO scan for mouse leave
+    // TODO keyboard focus
     var handler = self.handleEvent.bind(this);
     if (this.buttons) {
       this.canvas.addEventListener('mousedown', handler);
       this.canvas.addEventListener('mouseup', handler);
+      this.canvas.addEventListener('touchstart', handler);
+      this.canvas.addEventListener('touchend', handler);
     }
-    // TODO touch events broken
-    this.canvas.addEventListener('touchstart', handler);
-    this.canvas.addEventListener('touchend', handler);
+    window.addEventListener('keydown', handler);
+    window.addEventListener('keyup', handler);
   }
 
   handleEvent(e) {
-    e.preventDefault();
     switch(e.type) {
       case 'mousedown':
         this.input.x = e.offsetX;
@@ -227,6 +215,13 @@ class Input {
       case 'touchend':
         this.input.x = false;
         this.input.y = false;
+        break;
+      case 'keydown':
+        if([37, 38, 39, 40].indexOf(e.keyCode) > -1 ) { e.preventDefault(); };
+        this.input.keys[e.keyCode] = true;
+        break;
+      case 'keyup':
+        this.input.keys[e.keyCode] = false;
         break;
     }
   }

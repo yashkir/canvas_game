@@ -1,3 +1,5 @@
+"use strict";
+
 function Game(elementId, width, height) {
   var self = this;
 
@@ -17,64 +19,21 @@ function Game(elementId, width, height) {
   this.context = this.canvas.getContext("2d");
 
   this.frameN = 0;
-  this.input = new Object()
-  this.input.keys = [];
-  this.buttons = {};
-  this.input.x = false;
-  this.input.y = false;
 
-  var element = document.getElementById(elementId);
   // TODO inserts before first node, make more flexible?
+  var element = document.getElementById(elementId);
   element.insertBefore(this.canvas, element.childNodes[0]);
 
   this.start = function () {
-
-    // Disable the arrow keys from scrolling
-    window.addEventListener('keydown', function (e) {
-      if([37, 38, 39, 40].indexOf(e.keyCode) > -1 ) {
-        e.preventDefault();
-      }
-    });
-
-    // KEYBOARD
-    window.addEventListener('keydown', function (e) {
-      self.input.keys[e.keyCode] = true;
-    })
-    window.addEventListener('keyup', function (e) {
-      self.input.keys[e.keyCode] = false;
-    })
-
-    //MOUSE AND TOUCH
-    this.canvas.addEventListener('mousedown', function (e) {
-      self.input.x = e.offsetX;
-      self.input.y = e.offsetY;
-    })
-    this.canvas.addEventListener('mouseup', function (e) {
-      self.input.x = false;
-      self.input.y = false;
-    })
-    /* TODO touch events broken
-    window.addEventListener('touchstart', function (e) {
-      e.preventDefault();
-      self.player.setSpeedX(-1);
-      self.input.x = e.offsetX;
-      self.input.y = e.offsetY;
-    })
-    this.canvas.addEventListener('touchend', function (e) {
-      self.input.x = false;
-      self.input.y = false;
-    })
-    */
-
-    // PLAYER AND GAME LOOP
     this.player = new Component(this.context, this.settings.startX, this.settings.startY,
                                 this.settings.playerWidth, this.settings.playerHeight,
                                 this.settings.playerColor, true);
-    this.obstacles = new ObstacleGroup(this.context, 0, 0, 100, 100);
     this.buttons = new ControlGroup(self.context, this.canvas.width / 2 - 20 * 3 / 2,
                                                   this.canvas.height - 20 * 4,
                                                   20, 20);
+    this.input_object = new Input(this.canvas, this.player, this.buttons);
 
+    this.obstacles = new ObstacleGroup(this.context, 0, 0, 100, 100);
     this.obstacles.spawn();
     this.interval = window.setInterval(this.update, 1000 / this.settings.fps);
   }
@@ -93,28 +52,7 @@ function Game(elementId, width, height) {
     // To be called by window.setInterval, so we must use self to not lose binding
 
     // INPUT CHECK
-    //self.player.setSpeedX(0);
-    //self.player.setSpeedY(0);
-
-    if (self.input.x) {
-      if (self.buttons.left.clicked(self.input.x, self.input.y)) {
-        self.player.setSpeedX(-1);
-      } else if (self.buttons.right.clicked(self.input.x, self.input.y)) {
-        self.player.setSpeedX(1);
-      } else if (self.buttons.up.clicked(self.input.x, self.input.y)) {
-        self.player.setSpeedY(-1);
-      } else if (self.buttons.down.clicked(self.input.x, self.input.y)) {
-        self.player.setSpeedY(1);
-      }
-    } else {
-      self.player.setSpeedX(0);
-      self.player.setSpeedY(0);
-    }
-
-    if (self.input.keys[37]) { self.player.setSpeedX(-1); }; //left
-    if (self.input.keys[38]) { self.player.setSpeedY(-1); }; //up
-    if (self.input.keys[39]) { self.player.setSpeedX(1); }; //right
-    if (self.input.keys[40]) { self.player.setSpeedY(1); }; //down
+    self.input_object.update();
 
     // UPDATE AND REDRAW
 
@@ -194,9 +132,11 @@ function ControlGroup(context, x, y, w, h, input) {
   this.buttonGroup = [this.up, this.down, this.left, this.right];
 
   this.update = function () {
+    var button;
     for(button of this.buttonGroup) { button.update() };
   }
 }
+
 function Obstacle(context, x, y, width, height, color, isMobile) {
   Component.call(this, context, x, y, width, height, color, isMobile);
 }
@@ -211,7 +151,7 @@ function ObstacleGroup(context, x1, y1, x2, y2) {
 
   this.width = 20; //TODO
   this.height = 20;
-  
+
   this.spawn = function () {
     var obstacle = new Obstacle(
       context, this.x1, this.y1, this.width, this.height, "yellow", true);
@@ -228,6 +168,79 @@ function ObstacleGroup(context, x1, y1, x2, y2) {
         this.obstacles[i].update();
       }
     }
+  }
+}
+
+function Input(canvas, player, buttons) {
+  var self = this;
+  this.canvas = canvas;
+
+  this.input = new Object()
+  this.input.keys = [];
+  this.input.x = false;
+  this.input.y = false;
+
+  this.player = player;
+  this.buttons = buttons;
+
+  // Event listeners, we must use 'self' here. First disable defaults.
+  window.addEventListener('keydown', function (e) {
+    if([37, 38, 39, 40].indexOf(e.keyCode) > -1 ) {
+      e.preventDefault();
+    }
+  });
+  window.addEventListener('keydown', function (e) {
+    self.input.keys[e.keyCode] = true;
+  })
+  window.addEventListener('keyup', function (e) {
+    self.input.keys[e.keyCode] = false;
+  })
+
+  // Mouse and touch
+  if (this.buttons) {
+    this.canvas.addEventListener('mousedown', function (e) {
+      self.input.x = e.offsetX;
+      self.input.y = e.offsetY;
+    })
+    this.canvas.addEventListener('mouseup', function (e) {
+      self.input.x = false;
+      self.input.y = false;
+    })
+  }
+  /* TODO touch events broken
+  window.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    self.player.setSpeedX(-1);
+    self.input.x = e.offsetX;
+    self.input.y = e.offsetY;
+  })
+  this.canvas.addEventListener('touchend', function (e) {
+    self.input.x = false;
+    self.input.y = false;
+  })
+  */
+  this.update = function () {
+    if (this.buttons) {
+      if (self.input.x) {
+        if (self.buttons.left.clicked(self.input.x, self.input.y)) {
+          self.player.setSpeedX(-1);
+        } else if (self.buttons.right.clicked(self.input.x, self.input.y)) {
+          self.player.setSpeedX(1);
+        } else if (self.buttons.up.clicked(self.input.x, self.input.y)) {
+          self.player.setSpeedY(-1);
+        } else if (self.buttons.down.clicked(self.input.x, self.input.y)) {
+          self.player.setSpeedY(1);
+        }
+      } else {
+        self.player.setSpeedX(0);
+        self.player.setSpeedY(0);
+      }
+    }
+
+    if (self.input.keys[37]) { self.player.setSpeedX(-1); }; //left
+    if (self.input.keys[38]) { self.player.setSpeedY(-1); }; //up
+    if (self.input.keys[39]) { self.player.setSpeedX(1); }; //right
+    if (self.input.keys[40]) { self.player.setSpeedY(1); }; //down
   }
 }
 

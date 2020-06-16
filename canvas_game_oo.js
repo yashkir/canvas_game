@@ -21,40 +21,38 @@ class Game {
       playerWidth: 20,
       playerColor: "red",
       fps : 50,
-      spawnInterval : 200
+      spawnInterval : 400
     }
-    this.fps = this.settings.fps;
-
-    this.playArea = new Rect(0,0,200,180);
-
     this.canvas = document.createElement("canvas");
     this.canvas.width = 200;
     this.canvas.height = 300;
-    this.context = this.canvas.getContext("2d");
-
-    this.frameN = 0;
-    this.msPerFrame = Math.floor(1000 / this.fps);
-
     // TODO inserts before first node, make more flexible?
     var element = document.getElementById(elementId);
     element.insertBefore(this.canvas, element.childNodes[0]);
 
+    this.context = this.canvas.getContext("2d");
+    this.playArea = new Rect(0,0,200,180);
+
+    this.fps = this.settings.fps;
+    this.frameN = 0;
+    this.msPerFrame = Math.floor(1000 / this.fps);
   }
 
   start() {
-    var boundingBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.player = new Component(this.context, this.settings.startX, this.settings.startY,
                                 this.settings.playerWidth, this.settings.playerHeight,
                                 this.settings.playerColor, true);
+    var boundingBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.player.setBoundingBox(boundingBox);
-    this.buttons = new ControlGroup(this.context, this.canvas.width / 2 - 20 * 3 / 2,
+    this.buttons = new ControlGroup(this.context, this.canvas.width - 20 * 4,
                                                   this.canvas.height - 20 * 4,
                                                   20, 20);
     this.input_object = new Input(this.canvas, this.player, this.buttons);
+    this.score = new TextBox(this.context, 20, this.canvas.height - 20, "14px monospace", "score");
 
-    this.obstacles = new ObstacleGroup(this.context, 0, 0, this.canvas.width, this.canvas.height - 100);
+    this.obstacles = new ObstacleGroup(this.context, 0, -20, this.canvas.width, this.canvas.height - 100);
 
-    this.interval = window.setInterval(() => this.update(), this.msPerFrame);
+    this.interval = window.setInterval( () => this.update(), this.msPerFrame );
   }
 
   stop() {
@@ -70,7 +68,6 @@ class Game {
   onInterval(delay, f) {
     var frameDelay = delay / this.msPerFrame;
     if (this.frameN % frameDelay == 0) {
-
       f();
     }
   }
@@ -82,6 +79,8 @@ class Game {
     this.obstacles.update();
     this.player.update();
     this.buttons.update();
+    this.score.text = "score: " + this.frameN;
+    this.score.update();
     //TODO check collisions
     if(this.obstacles.someoneCollidedWith(this.player)) {
       this.stop();
@@ -107,7 +106,7 @@ class Component {
     this.width  = width;
     this.height = height;
     this.color  = color;
-    this.isMobile = false;
+    this.isMobile = isMobile;
     this.speedX = 0;
     this.speedY = 0;
     this.boundingBox = false;
@@ -118,12 +117,10 @@ class Component {
   }
 
   setSpeedX(x) {
-    if (!this.isMobile) { this.isMobile = true }
     this.speedX = x;
   }
 
   setSpeedY(y) {
-    if (!this.isMobile) { this.isMobile = true }
     this.speedY = y;
   }
 
@@ -174,6 +171,31 @@ class Component {
     } else {
       return true;
     }
+  }
+}
+
+class TextBox {
+  constructor(context, x, y, font, text, color) {
+    this._context = context;
+    this._x = x;
+    this._y = y;
+    this._font = font;
+    this._text = text;
+    this._color = color || "white";
+  }
+  
+  set text(value) {
+    this._text = value;
+  }
+
+  update() {
+    this.draw();
+  }
+
+  draw() {
+    this._context.font = this._font;
+    this._context.fillStyle = this._color;
+    this._context.fillText(this._text, this._x, this._y);
   }
 }
 

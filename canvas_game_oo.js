@@ -1,25 +1,39 @@
 "use strict";
 
+class Rect {
+  constructor(x1, y1, x2, y2) {
+    this.x1 = x1;
+    this.y1 = y1;
+    this.y2 = y2;
+    this.x2 = x2;
+  }
+}
+
 class Game {
   constructor(elementId, width, height) {
     var self = this;
 
     this.settings = {
       backgroundColor : "black",
-      startX : 50,
-      startY : 50,
+      startX : 90,
+      startY : 180,
       playerHeight: 20,
       playerWidth: 20,
       playerColor: "red",
-      fps : 50
+      fps : 50,
+      spawnInterval : 200
     }
+    this.fps = this.settings.fps;
+
+    this.playArea = new Rect(0,0,200,180);
 
     this.canvas = document.createElement("canvas");
-    this.canvas.width = width;
-    this.canvas.height = height;
+    this.canvas.width = 200;
+    this.canvas.height = 300;
     this.context = this.canvas.getContext("2d");
 
     this.frameN = 0;
+    this.msPerFrame = Math.floor(1000 / this.fps);
 
     // TODO inserts before first node, make more flexible?
     var element = document.getElementById(elementId);
@@ -36,11 +50,9 @@ class Game {
                                                   20, 20);
     this.input_object = new Input(this.canvas, this.player, this.buttons);
 
-    this.obstacles = new ObstacleGroup(this.context, 0, 0, 100, 100);
-    this.obstacles.spawn();
+    this.obstacles = new ObstacleGroup(this.context, 0, 0, this.canvas.width, this.canvas.height - 100);
 
-    this.update = this.update.bind(this);
-    this.interval = window.setInterval(this.update, 1000 / this.settings.fps);
+    this.interval = window.setInterval(() => this.update(), this.msPerFrame);
   }
 
   stop() {
@@ -53,6 +65,14 @@ class Game {
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  onInterval(delay, f) {
+    var frameDelay = delay / this.msPerFrame;
+    if (this.frameN % frameDelay == 0) {
+
+      f();
+    }
+  }
+
   update() {
     this.input_object.update();
 
@@ -60,6 +80,14 @@ class Game {
     this.obstacles.update();
     this.player.update();
     this.buttons.update();
+    //TODO check collisions
+    if(this.obstacles.someoneCollidedWith(this.player)) {
+      this.stop();
+    }
+
+    this.onInterval(this.settings.spawnInterval, () => this.obstacles.spawn());
+
+    this.frameN++;
   }
 
   onInputEvent() {
@@ -70,8 +98,10 @@ class Game {
 class Component {
   constructor(context, x, y, width, height, color, isMobile) {
     this.context = context;
-    this.x = x;
-    this.y = y;
+    this.x1 = x;
+    this.y1 = y;
+    this.x2 = x + width;
+    this.y2 = y + height;
     this.width  = width;
     this.height = height;
     this.color  = color;
@@ -92,23 +122,30 @@ class Component {
 
   update() {
     if (this.isMobile) {
-      this.x += this.speedX;
-      this.y += this.speedY;
+      this.x1 += this.speedX;
+      this.y1 += this.speedY;
+      this.x2 += this.speedX;
+      this.y2 += this.speedY;
     }
     this.draw();
   }
 
   draw() {
     this.context.fillStyle = this.color;
-    this.context.fillRect(this.x, this.y, this.width, this.height);
+    this.context.fillRect(this.x1, this.y1, this.width, this.height);
   }
 
   clicked(x, y) {
-    var l = this.x;
-    var r = this.x + this.width;
-    var t = this.y;
-    var b = this.y + this.height;
-    if ((r < x) || (l > x) || (b < y) || (t > y)) {
+    var r = new Rect(x, y, x, y);
+    return this.collidedWith(r);
+  }
+
+  collidedWith(a) {
+    var l = this.x1;
+    var r = this.x2;
+    var t = this.y1;
+    var b = this.y2;
+    if ((r < a.x1) || (l > a.x2) || (b < a.y1) || (t > a.y2)) {
       return false;
     } else {
       return true;
@@ -143,7 +180,7 @@ class Obstacle extends Component {
 class ObstacleGroup {
   constructor(context, x1, y1, x2, y2) {
     this.context = context;
-    this.obstacles = [];
+    this.obstacles = new Array(0);
     this.x1 = x1;
     this.x2 = x2;
     this.y1 = y1;
@@ -154,8 +191,9 @@ class ObstacleGroup {
   }
 
   spawn() {
+    var x = Math.floor(Math.random() * (this.x2 - this.x1)) + this.x1;
     var obstacle = new Obstacle(
-      this.context, this.x1, this.y1, this.width, this.height, "yellow", true);
+      this.context, x, this.y1, this.width, this.height, "yellow", true);
     obstacle.setSpeedY(1);
     this.obstacles.push(obstacle);
   }
@@ -163,14 +201,26 @@ class ObstacleGroup {
   update() {
     var i;
     for (i = 0; i < this.obstacles.length; i++) {
-      if (this.obstacles[i].y > this.y2) {
+      if (this.obstacles[i].y2 > this.y2) {
         this.obstacles.splice(i, 1);
       } else {
         this.obstacles[i].update();
       }
     }
   }
+
+  someoneCollidedWith(obj) {
+    var i;
+
+    for (i = 0; i < this.obstacles.length; i++) {
+      if (this.obstacles[i].collidedWith(obj)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
+
 class Input {
   constructor(canvas, player, buttons) {
     var self = this;
@@ -254,5 +304,5 @@ class Input {
   }
 }
 
-var GAME = new Game("game", 200, 300);
+var GAME = new Game("game");
 GAME.start();

@@ -42,9 +42,11 @@ class Game {
   }
 
   start() {
+    var boundingBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.player = new Component(this.context, this.settings.startX, this.settings.startY,
                                 this.settings.playerWidth, this.settings.playerHeight,
                                 this.settings.playerColor, true);
+    this.player.setBoundingBox(boundingBox);
     this.buttons = new ControlGroup(this.context, this.canvas.width / 2 - 20 * 3 / 2,
                                                   this.canvas.height - 20 * 4,
                                                   20, 20);
@@ -108,6 +110,11 @@ class Component {
     this.isMobile = false;
     this.speedX = 0;
     this.speedY = 0;
+    this.boundingBox = false;
+  }
+
+  setBoundingBox(value) {
+    this.boundingBox = value;
   }
 
   setSpeedX(x) {
@@ -122,10 +129,27 @@ class Component {
 
   update() {
     if (this.isMobile) {
-      this.x1 += this.speedX;
-      this.y1 += this.speedY;
-      this.x2 += this.speedX;
-      this.y2 += this.speedY;
+      var bounded = false;
+      var t = new Rect( this.x1 + this.speedX,
+                        this.y1 + this.speedY,
+                        this.x2 + this.speedX,
+                        this.y2 + this.speedY );
+
+      // Check the bounding box or return
+      if (this.boundingBox instanceof Rect) {
+        var bb = this.boundingBox;
+        if (t.x1 < this.boundingBox.x1 || t.x2 > this.boundingBox.x2 ||
+            t.y1 < this.boundingBox.y1 || t.y2 > this.boundingBox.y2) {
+          bounded = true;
+        }
+      }
+
+      if (!bounded) {
+        this.x1 = t.x1;
+        this.y1 = t.y1;
+        this.x2 = t.x2;
+        this.y2 = t.y2;
+      }
     }
     this.draw();
   }

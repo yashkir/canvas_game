@@ -21,7 +21,8 @@ class Game {
       playerWidth: 20,
       playerColor: "red",
       fps : 50,
-      spawnInterval : 400
+      spawnInterval : 400,
+      image: "img/spaceship.png"
     }
     this.canvas = document.createElement("canvas");
     this.canvas.width = 200;
@@ -36,12 +37,18 @@ class Game {
     this.fps = this.settings.fps;
     this.frameN = 0;
     this.msPerFrame = Math.floor(1000 / this.fps);
+    this.__isRunning = false;
+  }
+
+  splashScreen() {
+    this.clear();
   }
 
   start() {
-    this.player = new Component(this.context, this.settings.startX, this.settings.startY,
-                                this.settings.playerWidth, this.settings.playerHeight,
-                                this.settings.playerColor, true);
+    this.__isRunning = true;
+    this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
+                                     this.settings.playerWidth, this.settings.playerHeight,
+                                     this.settings.image, true);
     var boundingBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.player.setBoundingBox(boundingBox);
     this.buttons = new ControlGroup(this.context, this.canvas.width - 20 * 4,
@@ -49,6 +56,8 @@ class Game {
                                                   20, 20);
     this.input_object = new Input(this.canvas, this.player, this.buttons);
     this.score = new TextBox(this.context, 20, this.canvas.height - 20, "14px monospace", "score");
+    this.gameOver = new TextBox(this.context, 35, this.canvas.height /2, "20px monospace", "GAME OVER");
+    this.sndGameOver = new Sound("sound/voiceover/Male/game_over.ogg");
 
     this.obstacles = new ObstacleGroup(this.context, 0, -20, this.canvas.width, this.canvas.height - 100);
 
@@ -57,6 +66,9 @@ class Game {
 
   stop() {
     clearInterval(this.interval);
+    this.__isRunning = false;
+
+    this.gameOver.update();
   }
 
   clear() {
@@ -84,6 +96,7 @@ class Game {
     //TODO check collisions
     if(this.obstacles.someoneCollidedWith(this.player)) {
       this.stop();
+      this.sndGameOver.play();
     }
 
     this.onInterval(this.settings.spawnInterval, () => this.obstacles.spawn());
@@ -171,6 +184,39 @@ class Component {
     } else {
       return true;
     }
+  }
+}
+
+class ImageComponent extends Component {
+  constructor(context, x, y, width, height, image, isMobile) {
+    super(context, x, y, width, height, "blue", isMobile);
+    this._image = new Image();
+    this._image.src = image;
+  }
+
+  draw() {
+    this.context.fillStyle = this.color;
+    this.context.drawImage(this._image,
+      this.x1, this.y1, this.width, this.height);
+  }
+}
+
+class Sound {
+  constructor(src) {
+    this._sound = document.createElement("audio");
+    this._sound.src = src;
+    this._sound.setAttribute("preload", "auto");
+    this._sound.setAttribute("controls", "none");
+    this._sound.style.display = "none";
+    document.body.appendChild(this._sound);
+  }
+
+  play() {
+    this._sound.play();
+  }
+
+  stop() {
+    this._sound.pause();
   }
 }
 
@@ -351,4 +397,4 @@ class Input {
 }
 
 var GAME = new Game("game");
-GAME.start();
+GAME.splashScreen();

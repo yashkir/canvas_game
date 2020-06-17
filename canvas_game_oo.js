@@ -130,7 +130,10 @@ class Component {
     this.speedX = 0;
     this.speedY = 0;
 
+    this.isAngluar = false;
+    this.speed = 2;
     this.angle = 0;
+
     this.gravity = 0;
     this.speedGravity = 0;
     this.bounce = 0;
@@ -150,14 +153,40 @@ class Component {
     this.speedY = y;
   }
 
+  sendKeys(vKeys) {
+    if (!this.isAngular) {
+      this.speedX = 0;
+      this.speedY = 0;
+      if (vKeys.up)    { this.speedY = -this.speed };
+      if (vKeys.down)  { this.speedY = this.speed };
+      if (vKeys.left)  { this.speedX = -this.speed };
+      if (vKeys.right) { this.speedX = this.speed };
+    }
+  }
+
   update() {
     if (this.isMobile) {
       var bounded = false;
-      var t = new Rect( this.x1 + this.speedX,
-                        this.y1 + this.speedY + this.speedGravity,
-                        this.x2 + this.speedX,
-                        this.y2 + this.speedY + this.speedGravity );
+      var t;
+      
       this.speedGravity += this.gravity;
+
+      // calculate the target rectangle
+      if (!this.isAngular) {
+        t = new Rect( this.x1 + this.speedX,
+                      this.y1 + this.speedY + this.speedGravity,
+                      this.x2 + this.speedX,
+                      this.y2 + this.speedY + this.speedGravity );
+      } else {
+        var transX = this.speed * Math.sin(this.angle);
+        var transY = this.speed * Math.cos(this.angle);
+        t = new Rect( this.x1 + transX,
+                      this.y1 + transY + this.speedGravity,
+                      this.x2 + transX,
+                      this.y2 + transY + this.speedGravity );
+      }
+
+
       // Check the bounding box or return
       // TODO stick it to the box
       if (this.boundingBox instanceof Rect) {
@@ -176,9 +205,8 @@ class Component {
       } else if ( this.bounce && (t.y2 >= this.boundingBox.y2) ) {
         this.speedGravity *= -this.bounce;
       }
-
-      //TODO check bounce
     }
+
     this.draw();
   }
 
@@ -353,6 +381,8 @@ class Input {
     this.player = player;
     this.buttons = buttons;
 
+    this.vKeys = new VirtualKeys();
+
     this.input = {
       keys : [],
       x : false,
@@ -405,27 +435,42 @@ class Input {
     if (this.buttons) {
       if (this.input.x) {
         if (this.buttons.left.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedX(-this.speed);
+          this.vKeys.left = true;
         } else if (this.buttons.right.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedX(this.speed);
+          this.vKeys.right = true;
         } else if (this.buttons.up.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedY(-this.speed);
+          this.vKeys.up = true;
         } else if (this.buttons.down.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedY(this.speed);
+          this.vKeys.down = true;
         }
       } else {
-        this.player.setSpeedX(0);
-        this.player.setSpeedY(0);
+        this.vKeys.reset();
       }
     } else {
-      this.player.setSpeedX(0);
-      this.player.setSpeedY(0);
+      this.vKeys.reset()
     }
 
-    if (this.input.keys[37]) { this.player.setSpeedX(-this.speed); }; //left
-    if (this.input.keys[38]) { this.player.setSpeedY(-this.speed); }; //up
-    if (this.input.keys[39]) { this.player.setSpeedX(this.speed); }; //right
-    if (this.input.keys[40]) { this.player.setSpeedY(this.speed); }; //down
+    if (this.input.keys[37]) { this.vKeys.left = true; }; //left
+    if (this.input.keys[38]) { this.vKeys.up = true; }; //up
+    if (this.input.keys[39]) { this.vKeys.right = true; }; //right
+    if (this.input.keys[40]) { this.vKeys.down = true; }; //down
+
+    this.player.sendKeys(this.vKeys);
+  }
+}
+
+class VirtualKeys {
+  constructor() {
+    this.up = false
+    this.down = false
+    this.left = false
+    this.right = false
+  }
+
+  reset() {
+    for (var key in this) {
+      this[key] = false;
+    }
   }
 }
 

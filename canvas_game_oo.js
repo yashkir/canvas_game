@@ -21,7 +21,7 @@ class Game {
       playerWidth: 20,
       playerColor: "red",
       fps : 50,
-      spawnInterval : 400,
+      spawnInterval : 1500,
       image: "img/spaceship.png"
     }
     this.canvas = document.createElement("canvas");
@@ -49,17 +49,19 @@ class Game {
     this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
                                      this.settings.playerWidth, this.settings.playerHeight,
                                      this.settings.image, true);
-    var boundingBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
-    this.player.setBoundingBox(boundingBox);
+    this.playBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
+    this.GUI = new Component(this.context, 0, this.playBox.y2, this.canvas.width, this.playBox.y2, "#222222");
+    this.player.setBoundingBox(this.playBox);
     this.buttons = new ControlGroup(this.context, this.canvas.width - 20 * 4,
                                                   this.canvas.height - 20 * 4,
                                                   20, 20);
     this.input_object = new Input(this.canvas, this.player, this.buttons);
     this.score = new TextBox(this.context, 20, this.canvas.height - 20, "14px monospace", "score");
+    this.GUI.spawnInterval = new TextBox(this.context, 20, this.canvas.height - 40, "10px monospace", "spawn");
     this.gameOver = new TextBox(this.context, 35, this.canvas.height /2, "20px monospace", "GAME OVER");
     this.sndGameOver = new Sound("sound/voiceover/Male/game_over.ogg");
 
-    this.obstacles = new ObstacleGroup(this.context, 0, -20, this.canvas.width, this.canvas.height - 100);
+    this.obstacles = new ObstacleGroup(this.context, this.playBox);
 
     this.interval = window.setInterval( () => this.update(), this.msPerFrame );
   }
@@ -78,7 +80,7 @@ class Game {
   }
 
   onInterval(delay, f) {
-    var frameDelay = delay / this.msPerFrame;
+    var frameDelay = Math.floor(delay / this.msPerFrame);
     if (this.frameN % frameDelay == 0) {
       f();
     }
@@ -88,18 +90,23 @@ class Game {
     this.input_object.update();
 
     this.clear();
+    this.GUI.update();
     this.obstacles.update();
     this.player.update();
     this.buttons.update();
     this.score.text = "score: " + this.frameN;
     this.score.update();
-    //TODO check collisions
+
+    this.onInterval(this.settings.spawnInterval, () => this.obstacles.spawn());
+    this.settings.spawnInterval -= this.settings.spawnInterval/1000;
+    this.GUI.spawnInterval.text = "spawn: " + Math.floor(this.settings.spawnInterval);
+    this.GUI.spawnInterval.update();
+
     if(this.obstacles.someoneCollidedWith(this.player)) {
       this.stop();
       this.sndGameOver.play();
+      return;
     }
-
-    this.onInterval(this.settings.spawnInterval, () => this.obstacles.spawn());
 
     this.frameN++;
   }
@@ -122,6 +129,9 @@ class Component {
     this.isMobile = isMobile;
     this.speedX = 0;
     this.speedY = 0;
+    this.gravity = 0;
+    this.speedGravity = 0;
+    this.bounce = 0;
     this.boundingBox = false;
   }
 
@@ -141,11 +151,12 @@ class Component {
     if (this.isMobile) {
       var bounded = false;
       var t = new Rect( this.x1 + this.speedX,
-                        this.y1 + this.speedY,
+                        this.y1 + this.speedY + this.speedGravity,
                         this.x2 + this.speedX,
-                        this.y2 + this.speedY );
-
+                        this.y2 + this.speedY + this.speedGravity );
+      this.speedGravity += this.gravity;
       // Check the bounding box or return
+      // TODO stick it to the box
       if (this.boundingBox instanceof Rect) {
         var bb = this.boundingBox;
         if (t.x1 < this.boundingBox.x1 || t.x2 > this.boundingBox.x2 ||
@@ -159,7 +170,12 @@ class Component {
         this.y1 = t.y1;
         this.x2 = t.x2;
         this.y2 = t.y2;
+      } else if ( this.bounce && (t.y2 >= this.boundingBox.y2) ) {
+        console.log("bouncing");
+        this.speedGravity *= -this.bounce;
       }
+
+      //TODO check bounce
     }
     this.draw();
   }
@@ -270,13 +286,14 @@ class Obstacle extends Component {
 }
 
 class ObstacleGroup {
-  constructor(context, x1, y1, x2, y2) {
+  constructor(context, r) {
     this.context = context;
     this.obstacles = new Array(0);
-    this.x1 = x1;
-    this.x2 = x2;
-    this.y1 = y1;
-    this.y2 = y2;
+    this.x1 = r.x1;
+    this.x2 = r.x2;
+    this.y1 = r.y1;
+    this.y2 = r.y2;
+    this.rect = r;
 
     this.width = 20; //TODO
     this.height = 20;
@@ -286,14 +303,18 @@ class ObstacleGroup {
     var x = Math.floor(Math.random() * (this.x2 - this.x1)) + this.x1;
     var obstacle = new Obstacle(
       this.context, x, this.y1, this.width, this.height, "yellow", true);
-    obstacle.setSpeedY(1);
+    //obstacle.setSpeedY(1);
+    obstacle.gravity = 0.05;
+    obstacle.bounce = 0.3;
+    obstacle.setBoundingBox(this.rect);
     this.obstacles.push(obstacle);
   }
 
   update() {
     var i;
+    // Remove out of bounds obstacles
     for (i = 0; i < this.obstacles.length; i++) {
-      if (this.obstacles[i].y2 > this.y2) {
+      if (this.obstacles[i].y2 > (this.y2 + 5)) {
         this.obstacles.splice(i, 1);
       } else {
         this.obstacles[i].update();
@@ -315,7 +336,7 @@ class ObstacleGroup {
 
 class Input {
   constructor(canvas, player, buttons) {
-    var self = this;
+    this.speed = 2;
     this.canvas = canvas;
     this.player = player;
     this.buttons = buttons;
@@ -328,7 +349,7 @@ class Input {
 
     // TODO scan for mouse leave
     // TODO keyboard focus
-    var handler = self.handleEvent.bind(this);
+    var handler = this.handleEvent.bind(this);
     if (this.buttons) {
       this.canvas.addEventListener('mousedown', handler);
       this.canvas.addEventListener('mouseup', handler);
@@ -372,13 +393,13 @@ class Input {
     if (this.buttons) {
       if (this.input.x) {
         if (this.buttons.left.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedX(-1);
+          this.player.setSpeedX(-this.speed);
         } else if (this.buttons.right.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedX(1);
+          this.player.setSpeedX(this.speed);
         } else if (this.buttons.up.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedY(-1);
+          this.player.setSpeedY(-this.speed);
         } else if (this.buttons.down.clicked(this.input.x, this.input.y)) {
-          this.player.setSpeedY(1);
+          this.player.setSpeedY(this.speed);
         }
       } else {
         this.player.setSpeedX(0);
@@ -389,10 +410,10 @@ class Input {
       this.player.setSpeedY(0);
     }
 
-    if (this.input.keys[37]) { this.player.setSpeedX(-1); }; //left
-    if (this.input.keys[38]) { this.player.setSpeedY(-1); }; //up
-    if (this.input.keys[39]) { this.player.setSpeedX(1); }; //right
-    if (this.input.keys[40]) { this.player.setSpeedY(1); }; //down
+    if (this.input.keys[37]) { this.player.setSpeedX(-this.speed); }; //left
+    if (this.input.keys[38]) { this.player.setSpeedY(-this.speed); }; //up
+    if (this.input.keys[39]) { this.player.setSpeedX(this.speed); }; //right
+    if (this.input.keys[40]) { this.player.setSpeedY(this.speed); }; //down
   }
 }
 

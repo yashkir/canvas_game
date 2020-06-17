@@ -46,9 +46,13 @@ class Game {
 
   start() {
     this.__isRunning = true;
-    this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
+    //this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
+    //                                 this.settings.playerWidth, this.settings.playerHeight,
+    //                                 this.settings.image, true);
+    this.player = new Component(this.context, this.settings.startX, this.settings.startY,
                                      this.settings.playerWidth, this.settings.playerHeight,
-                                     this.settings.image, true);
+                                     this.settings.playerColor, true);
+    this.player.isAngular = true;
     this.playBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.GUI = new Component(this.context, 0, this.playBox.y2, this.canvas.width, this.playBox.y2, "#222222");
     this.player.setBoundingBox(this.playBox);
@@ -127,11 +131,14 @@ class Component {
     this.height = height;
     this.color  = color;
     this.isMobile = isMobile;
+    this.moveRate = 2;
     this.speedX = 0;
     this.speedY = 0;
 
     this.isAngluar = false;
-    this.speed = 2;
+    this.rotationRate = 0.1;
+    this.speedR = 0;
+    this.speedF = 0;
     this.angle = 0;
 
     this.gravity = 0;
@@ -154,13 +161,20 @@ class Component {
   }
 
   sendKeys(vKeys) {
+    this.speedX = 0;
+    this.speedY = 0;
+    this.speedF = 0;
+    this.speedR = 0;
     if (!this.isAngular) {
-      this.speedX = 0;
-      this.speedY = 0;
-      if (vKeys.up)    { this.speedY = -this.speed };
-      if (vKeys.down)  { this.speedY = this.speed };
-      if (vKeys.left)  { this.speedX = -this.speed };
-      if (vKeys.right) { this.speedX = this.speed };
+      if (vKeys.up)    { this.speedY = -this.moveRate };
+      if (vKeys.down)  { this.speedY = this.moveRate };
+      if (vKeys.left)  { this.speedX = -this.moveRate };
+      if (vKeys.right) { this.speedX = this.moveRate };
+    } else {
+      if (vKeys.up)    { this.speedF = this.moveRate };
+      if (vKeys.down)  { this.speedF = -this.moveRate };
+      if (vKeys.left)  { this.speedR = -this.rotationRate };
+      if (vKeys.right) { this.speedR = this.rotationRate };
     }
   }
 
@@ -178,8 +192,11 @@ class Component {
                       this.x2 + this.speedX,
                       this.y2 + this.speedY + this.speedGravity );
       } else {
-        var transX = this.speed * Math.sin(this.angle);
-        var transY = this.speed * Math.cos(this.angle);
+        this.angle += this.speedR;
+        console.log(this.angle);
+        var transX = this.speedF * Math.cos(this.angle);
+        var transY = this.speedF * Math.sin(this.angle);
+
         t = new Rect( this.x1 + transX,
                       this.y1 + transY + this.speedGravity,
                       this.x2 + transX,
@@ -222,6 +239,10 @@ class Component {
       this.context.fillStyle = this.color;
       this.context.fillRect(this.x1, this.y1, this.width, this.height);
     }
+  }
+
+  render() {
+    //TODO separate renderers
   }
 
   clicked(x, y) {

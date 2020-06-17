@@ -129,9 +129,12 @@ class Component {
     this.isMobile = isMobile;
     this.speedX = 0;
     this.speedY = 0;
+
+    this.angle = 0;
     this.gravity = 0;
     this.speedGravity = 0;
     this.bounce = 0;
+
     this.boundingBox = false;
   }
 
@@ -171,7 +174,6 @@ class Component {
         this.x2 = t.x2;
         this.y2 = t.y2;
       } else if ( this.bounce && (t.y2 >= this.boundingBox.y2) ) {
-        console.log("bouncing");
         this.speedGravity *= -this.bounce;
       }
 
@@ -181,8 +183,17 @@ class Component {
   }
 
   draw() {
-    this.context.fillStyle = this.color;
-    this.context.fillRect(this.x1, this.y1, this.width, this.height);
+    if (this.angle != 0) {
+      this.context.save();
+      this.context.translate( (this.x1 + this.x2) / 2, (this.y1 + this.y2) / 2 );
+      this.context.rotate(this.angle);
+      this.context.fillStyle = this.color;
+      this.context.fillRect(this.width / -2, this.height / -2, this.width, this.height);
+      this.context.restore();
+    } else {
+      this.context.fillStyle = this.color;
+      this.context.fillRect(this.x1, this.y1, this.width, this.height);
+    }
   }
 
   clicked(x, y) {
@@ -306,6 +317,7 @@ class ObstacleGroup {
     //obstacle.setSpeedY(1);
     obstacle.gravity = 0.05;
     obstacle.bounce = 0.3;
+    obstacle.angle = Math.random() * Math.PI * 2;
     obstacle.setBoundingBox(this.rect);
     this.obstacles.push(obstacle);
   }

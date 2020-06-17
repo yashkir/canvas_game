@@ -14,6 +14,8 @@ class Game {
     var self = this;
 
     this.settings = {
+      //TODO make the angular option changeable
+      playerAngular: true,
       backgroundColor : "black",
       startX : 90,
       startY : 180,
@@ -46,16 +48,18 @@ class Game {
 
   start() {
     this.__isRunning = true;
-    //this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
-    //                                 this.settings.playerWidth, this.settings.playerHeight,
-    //                                 this.settings.image, true);
-    this.player = new Component(this.context, this.settings.startX, this.settings.startY,
+
+    this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
                                      this.settings.playerWidth, this.settings.playerHeight,
-                                     this.settings.playerColor, true);
-    this.player.isAngular = true;
+                                     this.settings.image, true);
     this.playBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.GUI = new Component(this.context, 0, this.playBox.y2, this.canvas.width, this.playBox.y2, "#222222");
+    if (this.settings.playerAngular) {
+      this.player.isAngular = true;
+    }
+    this.player.angle = -(Math.PI / 2)
     this.player.setBoundingBox(this.playBox);
+
     this.buttons = new ControlGroup(this.context, this.canvas.width - 20 * 4,
                                                   this.canvas.height - 20 * 4,
                                                   20, 20);
@@ -182,7 +186,7 @@ class Component {
     if (this.isMobile) {
       var bounded = false;
       var t;
-      
+
       this.speedGravity += this.gravity;
 
       // calculate the target rectangle
@@ -193,7 +197,6 @@ class Component {
                       this.y2 + this.speedY + this.speedGravity );
       } else {
         this.angle += this.speedR;
-        console.log(this.angle);
         var transX = this.speedF * Math.cos(this.angle);
         var transY = this.speedF * Math.sin(this.angle);
 
@@ -228,7 +231,7 @@ class Component {
   }
 
   draw() {
-    if (this.angle != 0) {
+    if (this.isAngular != 0) {
       this.context.save();
       this.context.translate( (this.x1 + this.x2) / 2, (this.y1 + this.y2) / 2 );
       this.context.rotate(this.angle);
@@ -239,10 +242,6 @@ class Component {
       this.context.fillStyle = this.color;
       this.context.fillRect(this.x1, this.y1, this.width, this.height);
     }
-  }
-
-  render() {
-    //TODO separate renderers
   }
 
   clicked(x, y) {
@@ -271,9 +270,20 @@ class ImageComponent extends Component {
   }
 
   draw() {
-    this.context.fillStyle = this.color;
-    this.context.drawImage(this._image,
-      this.x1, this.y1, this.width, this.height);
+    if (this.isAngular != 0) {
+      this.context.save();
+
+      this.context.translate( (this.x1 + this.x2) / 2, (this.y1 + this.y2) / 2 );
+      this.context.rotate(this.angle + Math.PI / 2);
+
+      this.context.fillStyle = this.color;
+      this.context.drawImage(this._image, this.width / -2, this.height / -2, this.width, this.height);
+
+      this.context.restore();
+    } else {
+      this.context.fillStyle = this.color;
+      this.context.drawImage(this._image, this.x1, this.y1, this.width, this.height);
+    }
   }
 }
 
@@ -305,7 +315,7 @@ class TextBox {
     this._text = text;
     this._color = color || "white";
   }
-  
+
   set text(value) {
     this._text = value;
   }
@@ -355,7 +365,7 @@ class ObstacleGroup {
     this.y2 = r.y2;
     this.rect = r;
 
-    this.width = 20; //TODO
+    this.width = 20;
     this.height = 20;
   }
 

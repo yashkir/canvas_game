@@ -67,7 +67,7 @@ class Game {
     this.score = new TextBox(this.context, 20, this.canvas.height - 20, "14px monospace", "score");
     this.GUI.spawnInterval = new TextBox(this.context, 20, this.canvas.height - 40, "10px monospace", "spawn");
     this.gameOver = new TextBox(this.context, 35, this.canvas.height /2, "20px monospace", "GAME OVER");
-    this.sndGameOver = new Sound("sound/voiceover/Male/game_over.ogg");
+    this.sndGameOver = new Sound("sound/game_over.ogg");
 
     this.obstacles = new ObstacleGroup(this.context, this.playBox);
 

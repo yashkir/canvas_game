@@ -15,7 +15,7 @@ class Game {
 
     this.settings = {
       //TODO make the angular option changeable
-      playerAngular: true,
+      playerAngular: false,
       backgroundColor : "black",
       startX : 90,
       startY : 180,

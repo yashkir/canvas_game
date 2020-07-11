@@ -98,9 +98,11 @@ class Game {
     this.input_object.update();
 
     this.clear();
-    this.GUI.update();
+
     this.obstacles.update();
     this.player.update();
+
+    this.GUI.update();
     this.buttons.update();
     this.score.text = "score: " + this.frameN;
     this.score.update();
@@ -150,6 +152,7 @@ class Component {
     this.bounce = 0;
 
     this.boundingBox = false;
+    this.bounded = true;
   }
 
   setBoundingBox(value) {
@@ -209,7 +212,7 @@ class Component {
 
       // Check the bounding box or return
       // TODO stick it to the box
-      if (this.boundingBox instanceof Rect) {
+      if (this.boundingBox instanceof Rect && this.bounded) {
         var bb = this.boundingBox;
         if (t.x1 < this.boundingBox.x1 || t.x2 > this.boundingBox.x2 ||
             t.y1 < this.boundingBox.y1 || t.y2 > this.boundingBox.y2) {
@@ -373,10 +376,11 @@ class ObstacleGroup {
     var x = Math.floor(Math.random() * (this.x2 - this.x1)) + this.x1;
     var obstacle = new Obstacle(
       this.context, x, this.y1, this.width, this.height, "yellow", true);
-    //obstacle.setSpeedY(1);
-    obstacle.gravity = 0.05;
-    obstacle.bounce = 0.3;
-    obstacle.angle = Math.random() * Math.PI * 2;
+    obstacle.setSpeedY(1);
+    obstacle.bounded = false
+    //obstacle.gravity = 0.05;
+    //obstacle.bounce = 0.3;
+    //obstacle.angle = Math.random() * Math.PI * 2;
     obstacle.setBoundingBox(this.rect);
     this.obstacles.push(obstacle);
   }
@@ -385,7 +389,7 @@ class ObstacleGroup {
     var i;
     // Remove out of bounds obstacles
     for (i = 0; i < this.obstacles.length; i++) {
-      if (this.obstacles[i].y2 > (this.y2 + 5)) {
+      if (this.obstacles[i].y2 > (this.y2 + 20)) {
         this.obstacles.splice(i, 1);
       } else {
         this.obstacles[i].update();

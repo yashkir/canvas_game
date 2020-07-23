@@ -1,3 +1,11 @@
+/*
+ * canvas_game
+ *
+ * JS Canvas Vertical Scrolling Dodging Game
+ *
+ * Author: Yuriy Yashkir <yuriy.yashkir@gmail.com>
+ */
+
 "use strict";
 
 class Rect {

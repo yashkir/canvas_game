@@ -31,18 +31,20 @@ class Game {
       playerWidth: 20,
       playerColor: "red",
       fps : 50,
-      spawnInterval : 1500,
+      spawnInterval : 500,
+      speedStep: 0.001,
       image: "img/spaceship.png"
     }
+
     this.canvas = document.createElement("canvas");
-    this.canvas.width = 200;
-    this.canvas.height = 300;
+    this.canvas.width = 250;
+    this.canvas.height = 400;
     // TODO inserts before first node, make more flexible?
     var element = document.getElementById(elementId);
     element.insertBefore(this.canvas, element.childNodes[0]);
 
     this.context = this.canvas.getContext("2d");
-    this.playArea = new Rect(0,0,200,180);
+    this.playArea = new Rect(0, 0, this.canvas.width, this.canvas.height - 120);
 
     this.fps = this.settings.fps;
     this.frameN = 0;
@@ -74,7 +76,6 @@ class Game {
     this.input_object = new Input(this.canvas, this.player, this.buttons);
     this.score = new TextBox(this.context, 20, this.canvas.height - 20, "14px monospace", "score");
     this.GUI.spawnInterval = new TextBox(this.context, 20, this.canvas.height - 40, "10px monospace", "spawn");
-    this.gameOver = new TextBox(this.context, 35, this.canvas.height /2, "20px monospace", "GAME OVER");
     this.sndGameOver = new Sound("sound/game_over.ogg");
 
     this.obstacles = new ObstacleGroup(this.context, this.playBox);
@@ -86,6 +87,9 @@ class Game {
     clearInterval(this.interval);
     this.__isRunning = false;
 
+    this.context.textAlign = 'center';
+    this.gameOver = new TextBox(this.context, this.canvas.width / 2, this.canvas.height / 2,
+                                "20px monospace", "GAME OVER");
     this.gameOver.update();
   }
 
@@ -107,6 +111,7 @@ class Game {
 
     this.clear();
 
+    this.obstacles.baseSpeed += this.settings.speedStep;
     this.obstacles.update();
     this.player.update();
 
@@ -116,7 +121,7 @@ class Game {
     this.score.update();
 
     this.onInterval(this.settings.spawnInterval, () => this.obstacles.spawn());
-    this.settings.spawnInterval -= this.settings.spawnInterval/1000;
+    //this.settings.spawnInterval -= this.settings.spawnInterval/1000;
     this.GUI.spawnInterval.text = "spawn: " + Math.floor(this.settings.spawnInterval);
     this.GUI.spawnInterval.update();
 
@@ -378,13 +383,15 @@ class ObstacleGroup {
 
     this.width = 20;
     this.height = 20;
+
+    this.baseSpeed = 1.0;
   }
 
   spawn() {
     var x = Math.floor(Math.random() * (this.x2 - this.x1)) + this.x1;
     var obstacle = new Obstacle(
       this.context, x, this.y1, this.width, this.height, "yellow", true);
-    obstacle.setSpeedY(1);
+    obstacle.setSpeedY(this.baseSpeed);
     obstacle.bounded = false
     //obstacle.gravity = 0.05;
     //obstacle.bounce = 0.3;

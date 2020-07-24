@@ -24,6 +24,8 @@ class Rect {
     this.y1 = y1;
     this.y2 = y2;
     this.x2 = x2;
+    this.width  = x2 - x1;
+    this.height = y2 - y1;
   }
 }
 
@@ -70,13 +72,13 @@ class Game {
                                      RES.playerSprite.w, RES.playerSprite.h,
                                      RES.playerSprite.image, true);
     this.playBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
-    this.GUI = new Component(this.context, 0, this.playBox.y2, this.canvas.width, this.playBox.y2, "#222222");
     if (this.settings.playerAngular) {
       this.player.isAngular = true;
     }
     this.player.angle = -(Math.PI / 2)
     this.player.setBoundingBox(this.playBox);
 
+    this.GUI = new Component(this.context, 0, this.playBox.y2, this.canvas.width, this.playBox.y2, "#222222");
     this.buttons = new ControlGroup(this.context, this.canvas.width - 20 * 4,
                                                   this.canvas.height - 20 * 4,
                                                   20, 20);
@@ -88,15 +90,16 @@ class Game {
     this.obstacles = new ObstacleGroup(this.context, this.playBox);
 
     this.interval = window.setInterval( () => this.update(), this.msPerFrame );
+    this.background = new BackgroundStars(this.context, this.rect, 'white', [0,2]);
   }
 
   stop() {
     clearInterval(this.interval);
     this.__isRunning = false;
 
-    this.context.textAlign = 'center';
     this.gameOver = new TextBox(this.context, this.canvas.width / 2, this.canvas.height / 2,
                                 "20px monospace", "GAME OVER");
+    this.gameOver.textAlign = 'center';
     this.gameOver.update();
   }
 
@@ -117,6 +120,7 @@ class Game {
     this.input_object.update();
 
     this.clear();
+    //this.background.update();
 
     this.obstacles.baseSpeed += this.settings.speedStep;
     this.obstacles.update();
@@ -146,6 +150,27 @@ class Game {
   }
 }
 
+/* Generates a random scrolling background of stars */
+class BackgroundStars {
+  constructor(context, rect, height, color, scrollSpeed) {
+    this.context = context;
+    this.rect = { ...rect };
+    this.color = color;
+    this.scrollSpeed = scrollSpeed;
+  }
+
+  update() {
+    this.draw();
+  }
+
+  draw() {
+    this.context.fillStyle = this.color;
+    this.context.fillStyle = 'black';
+    this.context.fillRect(this.x1, this.y1, this.width, this.height);
+  }
+}
+
+/* Components */
 class Component {
   constructor(context, x, y, width, height, color, isMobile) {
     this.context = context;
@@ -310,70 +335,6 @@ class ImageComponent extends Component {
   }
 }
 
-class Sound {
-  constructor(src) {
-    this._sound = document.createElement("audio");
-    this._sound.src = src;
-    this._sound.setAttribute("preload", "auto");
-    this._sound.setAttribute("controls", "none");
-    this._sound.style.display = "none";
-    document.body.appendChild(this._sound);
-  }
-
-  play() {
-    this._sound.play();
-  }
-
-  stop() {
-    this._sound.pause();
-  }
-}
-
-class TextBox {
-  constructor(context, x, y, font, text, color) {
-    this._context = context;
-    this._x = x;
-    this._y = y;
-    this._font = font;
-    this._text = text;
-    this._color = color || "white";
-  }
-
-  set text(value) {
-    this._text = value;
-  }
-
-  update() {
-    this.draw();
-  }
-
-  draw() {
-    this._context.font = this._font;
-    this._context.fillStyle = this._color;
-    this._context.fillText(this._text, this._x, this._y);
-  }
-}
-
-class ControlGroup {
-  constructor(context, x, y, w, h, input) {
-    this.context = context
-    this.input = input;
-
-    this.color = "blue";
-
-    this.up    = new Component(this.context, x + w,     y,         w, h, this.color);
-    this.down  = new Component(this.context, x + w,     y + h * 2, w, h, this.color);
-    this.left  = new Component(this.context, x,         y + h,     w, h, this.color);
-    this.right = new Component(this.context, x + w * 2, y + h,     w, h, this.color);
-    this.buttonGroup = [this.up, this.down, this.left, this.right];
-  }
-
-  update() {
-    var button;
-    for(button of this.buttonGroup) { button.update() };
-  }
-}
-
 class Obstacle extends ImageComponent {
   // empty class
 }
@@ -425,6 +386,82 @@ class ObstacleGroup {
       }
     }
     return false;
+  }
+}
+
+/* Helpers */
+
+class Sound {
+  constructor(src) {
+    this._sound = document.createElement("audio");
+    this._sound.src = src;
+    this._sound.setAttribute("preload", "auto");
+    this._sound.setAttribute("controls", "none");
+    this._sound.style.display = "none";
+    document.body.appendChild(this._sound);
+  }
+
+  play() {
+    this._sound.play();
+  }
+
+  stop() {
+    this._sound.pause();
+  }
+}
+
+class TextBox {
+  constructor(context, x, y, font, text, color) {
+    this._context = context;
+    this._x = x;
+    this._y = y;
+    this._font = font;
+    this._text = text;
+    this._color = color || "white";
+    this._textAlign = 'start';
+  }
+
+  set textAlign(value) {
+    this._textAlign = value;
+  }
+
+  set text(value) {
+    this._text = value;
+  }
+
+  update() {
+    this.draw();
+  }
+
+  draw() {
+    var align = this._context.textAlign;
+    this._context.textAlign = this._textAlign;
+
+    this._context.font = this._font;
+    this._context.fillStyle = this._color;
+    this._context.fillText(this._text, this._x, this._y);
+
+    this._context.textAlign = align;
+  }
+}
+
+class ControlGroup {
+  constructor(context, x, y, w, h, input) {
+    this.context = context
+    this.input = input;
+
+    this.color = "blue";
+
+    this.up    = new Component(this.context, x + w,     y,         w, h, this.color);
+    this.down  = new Component(this.context, x + w,     y + h * 2, w, h, this.color);
+    this.left  = new Component(this.context, x,         y + h,     w, h, this.color);
+    this.right = new Component(this.context, x + w * 2, y + h,     w, h, this.color);
+    this.buttonGroup = [this.up, this.down, this.left, this.right];
+  }
+
+  update() {
+    var button;
+    for(button of this.buttonGroup) { button.update() };
   }
 }
 

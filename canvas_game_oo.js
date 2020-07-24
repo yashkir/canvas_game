@@ -8,6 +8,16 @@
 
 "use strict";
 
+//TODO is there better non-global way to handle resources?
+var RES = {
+  enemySprites : [
+    { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/enemy_1.png" },
+    { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/enemy_2.png" },
+    { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/enemy_3.png" },
+  ],
+  playerSprite : { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/player_ship.png" },
+}
+
 class Rect {
   constructor(x1, y1, x2, y2) {
     this.x1 = x1;
@@ -27,13 +37,10 @@ class Game {
       backgroundColor : "black",
       startX : 90,
       startY : 180,
-      playerHeight: 20,
-      playerWidth: 20,
       playerColor: "red",
       fps : 50,
       spawnInterval : 500,
       speedStep: 0.001,
-      image: "img/spaceship.png"
     }
 
     this.canvas = document.createElement("canvas");
@@ -60,8 +67,8 @@ class Game {
     this.__isRunning = true;
 
     this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
-                                     this.settings.playerWidth, this.settings.playerHeight,
-                                     this.settings.image, true);
+                                     RES.playerSprite.w, RES.playerSprite.h,
+                                     RES.playerSprite.image, true);
     this.playBox = new Rect(0, 0, this.canvas.width, this.canvas.height - 100);
     this.GUI = new Component(this.context, 0, this.playBox.y2, this.canvas.width, this.playBox.y2, "#222222");
     if (this.settings.playerAngular) {
@@ -286,7 +293,7 @@ class ImageComponent extends Component {
   }
 
   draw() {
-    if (this.isAngular != 0) {
+    if (this.isAngular) {
       this.context.save();
 
       this.context.translate( (this.x1 + this.x2) / 2, (this.y1 + this.y2) / 2 );
@@ -367,7 +374,7 @@ class ControlGroup {
   }
 }
 
-class Obstacle extends Component {
+class Obstacle extends ImageComponent {
   // empty class
 }
 
@@ -381,22 +388,19 @@ class ObstacleGroup {
     this.y2 = r.y2;
     this.rect = r;
 
-    this.width = 20;
-    this.height = 20;
-
     this.baseSpeed = 1.0;
   }
 
   spawn() {
+    var sprite = RES.enemySprites[Math.floor(Math.random() * (RES.enemySprites.length))];
     var x = Math.floor(Math.random() * (this.x2 - this.x1)) + this.x1;
+
     var obstacle = new Obstacle(
-      this.context, x, this.y1, this.width, this.height, "yellow", true);
+      this.context, x, this.y1 - sprite.h, sprite.w, sprite.h, sprite.image, true)
     obstacle.setSpeedY(this.baseSpeed);
     obstacle.bounded = false
-    //obstacle.gravity = 0.05;
-    //obstacle.bounce = 0.3;
-    //obstacle.angle = Math.random() * Math.PI * 2;
     obstacle.setBoundingBox(this.rect);
+
     this.obstacles.push(obstacle);
   }
 
@@ -404,7 +408,7 @@ class ObstacleGroup {
     var i;
     // Remove out of bounds obstacles
     for (i = 0; i < this.obstacles.length; i++) {
-      if (this.obstacles[i].y2 > (this.y2 + 20)) {
+      if (this.obstacles[i].y2 > (this.y2 + this.obstacles[i].h)) {
         this.obstacles.splice(i, 1);
       } else {
         this.obstacles[i].update();

@@ -27,6 +27,10 @@ class Rect {
     this.width  = x2 - x1;
     this.height = y2 - y1;
   }
+  
+  contains_point(x, y) {
+    return (this.y1 <= y && y <= this.y2) && (this.y1 <= y && y <= this.y2);
+  }
 }
 
 class Game {
@@ -41,7 +45,7 @@ class Game {
       startY : 180,
       playerColor: "red",
       fps : 50,
-      spawnInterval : 500,
+      spawnInterval : 1500,
       speedStep: 0.001,
     }
 
@@ -56,7 +60,6 @@ class Game {
     this.playArea = new Rect(0, 0, this.canvas.width, this.canvas.height - 120);
 
     this.fps = this.settings.fps;
-    this.frameN = 0;
     this.msPerFrame = Math.floor(1000 / this.fps);
     this.__isRunning = false;
   }
@@ -66,6 +69,7 @@ class Game {
   }
 
   start() {
+    this.frameN = 0;
     this.__isRunning = true;
 
     this.player = new ImageComponent(this.context, this.settings.startX, this.settings.startY,
@@ -90,7 +94,7 @@ class Game {
     this.obstacles = new ObstacleGroup(this.context, this.playBox);
 
     this.interval = window.setInterval( () => this.update(), this.msPerFrame );
-    this.background = new BackgroundStars(this.context, this.rect, 'white', [0,2]);
+    this.background = new BackgroundStars(this.context, this.playArea, 'white', 1);
   }
 
   stop() {
@@ -120,7 +124,7 @@ class Game {
     this.input_object.update();
 
     this.clear();
-    //this.background.update();
+    this.background.update();
 
     this.obstacles.baseSpeed += this.settings.speedStep;
     this.obstacles.update();
@@ -152,21 +156,59 @@ class Game {
 
 /* Generates a random scrolling background of stars */
 class BackgroundStars {
-  constructor(context, rect, height, color, scrollSpeed) {
+  constructor(context, rect, color, scrollSpeed) {
     this.context = context;
-    this.rect = { ...rect };
+    this.rect = rect; //{ ...rect }; // { ...var } makes a shallow copy
     this.color = color;
     this.scrollSpeed = scrollSpeed;
+    this.star_n = 50;
+
+    this.star = this.context.createImageData(1,1);
+    this.star[0] = 255;
+    this.star[1] = 255;
+    this.star[2] = 255;
+
+    this.stars = new Array(5);
+    this.make_stars();
+  }
+
+  make_stars() {
+    var x, y, i;
+    for (i = 0; i < this.star_n; ++i) {
+      x = random_int(this.rect.x1, this.rect.x2); 
+      y = random_int(this.rect.y1, this.rect.y2); 
+      this.stars[i] = new Array()
+      this.stars[i][0] = x;
+      this.stars[i][1] = y;
+    }
+  }
+
+  scroll_stars() {
+    var i;
+    for (i = 0; i < this.star_n; ++i) {
+      this.stars[i][1] += this.scrollSpeed;
+
+      //TODO stars fade out too early
+      if (!this.rect.contains_point(this.stars[i][0], this.stars[i][1])) {
+        this.stars[i][1] = this.rect.y1;
+        this.stars[i][0] = random_int(this.rect.x1, this.rect.x2); 
+      }
+    }
   }
 
   update() {
+    this.scroll_stars();
     this.draw();
   }
 
   draw() {
-    this.context.fillStyle = this.color;
-    this.context.fillStyle = 'black';
-    this.context.fillRect(this.x1, this.y1, this.width, this.height);
+    var i;
+    var x = random_int(this.rect.x1, this.rect.x2); 
+    var y = random_int(this.rect.y1, this.rect.y2); 
+
+    for (i = 0; i < this.star_n; ++i) {
+      this.context.putImageData(this.star, this.stars[i][0], this.stars[i][1]);
+    }
   }
 }
 
@@ -563,6 +605,10 @@ class VirtualKeys {
       this[key] = false;
     }
   }
+}
+
+function random_int(start, end) {
+  return Math.floor(start + Math.random() * (end - start));
 }
 
 var GAME = new Game("game");

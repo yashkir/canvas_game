@@ -9,7 +9,9 @@
 "use strict";
 
 //TODO is there better non-global way to handle resources?
-var WORKDIR = "./"
+if (!WORKDIR) {
+  var WORKDIR = "./";
+}
 var RES = {
   enemySprites : [
     { w: 32, h: 32, image: WORKDIR + "img/enemy_1.png" },

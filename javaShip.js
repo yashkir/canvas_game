@@ -9,13 +9,14 @@
 "use strict";
 
 //TODO is there better non-global way to handle resources?
+var WORKDIR = "./"
 var RES = {
   enemySprites : [
-    { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/enemy_1.png" },
-    { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/enemy_2.png" },
-    { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/enemy_3.png" },
+    { w: 32, h: 32, image: WORKDIR + "img/enemy_1.png" },
+    { w: 32, h: 32, image: WORKDIR + "img/enemy_2.png" },
+    { w: 32, h: 32, image: WORKDIR + "img/enemy_3.png" },
   ],
-  playerSprite : { w: 32, h: 32, image: "../resources/img/spaceshipset32x32/player_ship.png" },
+  playerSprite : { w: 32, h: 32, image: WORKDIR + "img/player_ship.png" },
 }
 
 class Rect {
@@ -89,7 +90,7 @@ class Game {
     this.input_object = new Input(this.canvas, this.player, this.buttons);
     this.score = new TextBox(this.context, 20, this.canvas.height - 20, "14px monospace", "score");
     this.GUI.spawnInterval = new TextBox(this.context, 20, this.canvas.height - 40, "10px monospace", "spawn");
-    this.sndGameOver = new Sound("sound/game_over.ogg");
+    this.sndGameOver = new Sound(WORKDIR + "sound/game_over.ogg");
 
     this.obstacles = new ObstacleGroup(this.context, this.playBox);
 

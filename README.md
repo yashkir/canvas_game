@@ -1,3 +1,5 @@
+![](javaship.png)
+
 # javaShip
 
 Pure JS vertical scrolling dodging game. Based on the
